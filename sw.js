@@ -1,8 +1,7 @@
-const CACHE = 'pizzar-v1.1.12';
+const CACHE = 'pizzar-v1.1.14';
 const ASSETS = [
   './',
   './index.html',
-  './manifest.json',
   './icon-192.png',
   './qr-static.png',
   'https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=DM+Mono:wght@400;500&display=swap'

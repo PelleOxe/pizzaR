@@ -5,7 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>PizzaR</title>
 <meta name="description" content="Pizzakalkylator optimerad för Ramlösa Tipo 00">
-<link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#1A1208">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
@@ -577,7 +576,7 @@
     <span>Pizzakalkylator optimerad för Ramlösa Tipo 00</span>
   </h1>
   <div class="header-right">
-    <span class="version-badge">v1.1.12</span>
+    <span class="version-badge">v1.1.13</span>
     <div class="header-btns">
       <button class="theme-btn" onclick="openAbout()" id="about-btn">ℹ️ Om</button>
       <button class="theme-btn" onclick="toggleTheme()" id="theme-btn">
@@ -858,7 +857,7 @@
 <dialog id="aboutDlg">
   <h2>Om PizzaR</h2>
   <p class="about-text">PizzaR är en pizzakalkylator optimerad för Ramlösa Tipo 00 och Ooni Karu 2. Välj antal bollar, bollstorlek, jästtyp, hydrering och kalljäsningstid, så räknar appen ut mjöl, vatten, salt och jäst och visar hela processen från autolys till bakning. Appen fungerar offline och inget laddas upp.</p>
-  <p class="about-meta">Version <b id="aboutVer"></b> · © <span id="aboutYr"></span> Per Andersson</p>
+  <p class="about-meta">Version <b id="aboutVer"></b> · © <span id="aboutYr"></span> Per Andersson<br>Körs som: <b id="aboutMode"></b></p>
   <div class="about-row">
     <button class="about-btn primary" id="updBtn">Sök uppdatering</button>
     <button class="about-btn" id="updGo" hidden>Uppdatera nu</button>
@@ -868,7 +867,28 @@
 </dialog>
 
 <script>
-const APP_VERSION = "1.1.12";
+const APP_VERSION = "1.1.14";
+
+// ─── FRISTÅENDE APPLÄGE (M40): manifest skapat i koden ──
+(function setupManifest() {
+  if (!/^https?:$/.test(location.protocol)) return;   // bara när appen ligger på en webbadress
+  try {
+    const manifest = {
+      name: 'PizzaR',
+      short_name: 'PizzaR',
+      description: 'Pizzakalkylator optimerad för Ramlösa Tipo 00',
+      start_url: location.origin + location.pathname,
+      display: 'standalone',
+      background_color: '#1A1208',
+      theme_color: '#1A1208',
+      icons: [{ src: new URL('icon-192.png', location.href).href, sizes: '192x192', type: 'image/png' }]
+    };
+    const link = document.createElement('link');
+    link.rel = 'manifest';
+    link.href = URL.createObjectURL(new Blob([JSON.stringify(manifest)], { type: 'application/json' }));
+    document.head.appendChild(link);
+  } catch (e) { console.warn('Manifest-fel', e); }
+})();
 
 // ─── THEME ────────────────────────────────────────────
 function toggleTheme() {
@@ -1025,9 +1045,23 @@ function syncTimePresets() {
   });
 }
 
-// ─── WAKE LOCK ────────────────────────────────────────
+// ─── WAKE LOCK (Wake Lock API + tyst videoloop som reserv, lösningen från Tärningskast) ──
 let wakeLock = null;
 let wantWake = false;
+let noSleepVideo = null;
+const NOSLEEP_SRC = 'data:video/mp4;base64,AAAAIGZ0eXBpc29tAAACAGlzb21pc28yYXZjMW1wNDEAAAAIZnJlZQAAAs1tZGF0AAACrgYF//+q3EXpvebZSLeWLNgg2SPu73gyNjQgLSBjb3JlIDE0MiByMjQ3OSBkZDc5YTYxIC0gSC4yNjQvTVBFRy00IEFWQSBDT0RFQyAtIENvcHlsZWZ0IDIwMDMtMjAxNCAtIGh0dHA6Ly93d3cudmlkZW9sYW4ub3JnL3gyNjQuaHRtbCAtIG9wdGlvbnM6IGNhYmFjPTEgcmVmPTMgZGVibG9jaz0xOjA6MCBhbmFseXNlPTB4MzoweDExMyBtZT1oZXggc3VibWU9NyBwc3k9MSBwc3lfcmQ9MS4wMDowLjAwIG1peGVkX3JlZj0xIG1lX3JhbmdlPTE2IGNocm9tYV9tZT0xIHRyZWxsaXM9MSA4eDhkY3Q9MSBjcW09MCBkZWFkem9uZT0yMSwxMSBmYXN0X3Bza2lwPTEgY2hyb21hX3FwX29mZnNldD0tMiBsb2Nmcm09MCB3aGl0ZWxhenk9MCBhcT0xOjEuMDAgZnJhbWVwYWNrPTMgYml0cmF0ZT0xMCBxY29tcD0wLjYwIHFwbWluPTEwIHFwbWF4PTUxIHFwc3RlcD00IGlwX3JhdGlvPTEuNDAgYXFtb2RlPTEgdmJsb2NrZWxpbWl0PTQwIG5hbD9oX2RlbGF5PTQwIG5hbD9oX2RlbGF5PTQwIG5hbD9oX2RlbGF5PTQwIG5hbD9oX2RlbGF5PTQwIG5hbD9oX2RlbGF5PTQwIG5hbD9oX2RlbGF5PTQwIG5hbD9oX2RlbGF5PTQwIG5hbD9oX2RlbGF5PTQwAAADAAADAAAFgAEAC3BhY2tBAAACIGZ0eXBpc29tAAACAGlzb21pc28yYXZjMW1wNDEA';
+
+function buildNoSleepVideo() {
+  if (noSleepVideo) return;
+  noSleepVideo = document.createElement('video');
+  noSleepVideo.setAttribute('loop', '');
+  noSleepVideo.setAttribute('playsinline', '');
+  noSleepVideo.setAttribute('muted', '');
+  noSleepVideo.muted = true;
+  noSleepVideo.setAttribute('src', NOSLEEP_SRC);
+  noSleepVideo.style.cssText = 'position:fixed;width:1px;height:1px;opacity:0.01;top:0;left:0;pointer-events:none;';
+  document.body.appendChild(noSleepVideo);
+}
 
 function updateWakeUI(text) {
   const sw = document.querySelector('.wake-switch');
@@ -1046,27 +1080,35 @@ async function acquireWake() {
   }
 }
 
+function playNoSleep() {
+  buildNoSleepVideo();
+  const p = noSleepVideo.play();
+  if (p && p.catch) p.catch(() => { if (wantWake) updateWakeUI('Tryck på skärmen för att aktivera'); });
+}
+
 async function setWake(on) {
   wantWake = on;
   if (on) {
-    if (!('wakeLock' in navigator)) {
-      wantWake = false;
-      updateWakeUI('Stöds inte i den här webbläsaren');
-      return;
-    }
-    const ok = await acquireWake();
-    if (!ok) { wantWake = false; updateWakeUI('Kunde inte aktiveras'); return; }
+    playNoSleep();      // först och utan await: iOS kräver att play() sker direkt i tryckningen
     updateWakeUI();
+    if ('wakeLock' in navigator) await acquireWake();
   } else {
+    if (noSleepVideo) noSleepVideo.pause();
     if (wakeLock) { try { await wakeLock.release(); } catch (e) {} wakeLock = null; }
     updateWakeUI();
   }
 }
 
-// iOS släpper låset när appen hamnar i bakgrunden — ta det igen när den kommer tillbaka
+// Om videon inte fick starta direkt: starta den vid nästa tryck på skärmen
+document.addEventListener('touchend', () => {
+  if (wantWake && noSleepVideo && noSleepVideo.paused) { playNoSleep(); updateWakeUI(); }
+}, { passive: true });
+
+// iOS släpper skärmlåset när appen hamnar i bakgrunden — ta det igen när den kommer tillbaka
 document.addEventListener('visibilitychange', async () => {
-  if (document.visibilityState === 'visible' && wantWake && !wakeLock) {
-    await acquireWake();
+  if (document.visibilityState === 'visible' && wantWake) {
+    if ('wakeLock' in navigator && !wakeLock) await acquireWake();
+    if (noSleepVideo && noSleepVideo.paused) playNoSleep();
   }
 });
 
@@ -1095,6 +1137,8 @@ async function doUpdate(){
 }
 function openAbout(){
   gid('aboutVer').textContent=APP_VERSION;gid('aboutYr').textContent=new Date().getFullYear();
+  const standalone = window.navigator.standalone === true || (window.matchMedia && window.matchMedia('(display-mode:standalone)').matches);
+  gid('aboutMode').textContent = standalone ? 'fristående app' : 'flik i webbläsaren';
   gid('updMsg').textContent='';gid('updGo').hidden=true;gid('aboutDlg').showModal();
 }
 gid('aboutClose').onclick=()=>gid('aboutDlg').close();
