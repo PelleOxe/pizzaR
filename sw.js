@@ -1,4 +1,4 @@
-const CACHE = 'pizzar-v1.1.10';
+const CACHE = 'pizzar-v1.1.12';
 const ASSETS = [
   './',
   './index.html',

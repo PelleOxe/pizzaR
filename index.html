@@ -2,16 +2,17 @@
 <html lang="sv">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>PizzaR</title>
 <meta name="description" content="Pizzakalkylator optimerad för Ramlösa Tipo 00">
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#1A1208">
 <meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="PizzaR">
 <link rel="apple-touch-icon" href="icon-192.png">
-<link rel="icon" type="image/png" href="icon-192.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -53,18 +54,22 @@
     font-family: 'DM Mono', monospace;
     font-size: 14px;
     min-height: 100vh;
-    padding-bottom: 40px;
+    padding-bottom: calc(40px + env(safe-area-inset-bottom, 0px));
+    padding-left: env(safe-area-inset-left, 0px);
+    padding-right: env(safe-area-inset-right, 0px);
   }
 
   header {
     background: var(--surface);
     border-bottom: 1px solid var(--border);
-    padding: 18px 20px 14px;
+    padding: max(18px, calc(4px + env(safe-area-inset-top, 0px))) 20px 14px;
     display: flex;
     align-items: center;
     justify-content: space-between;
+    gap: 10px;
   }
   header h1 {
+    min-width: 0;
     font-family: 'Playfair Display', serif;
     font-size: 22px;
     font-weight: 700;
@@ -85,6 +90,7 @@
     margin-top: 3px;
   }
   .header-right {
+    flex-shrink: 0;
     display: flex;
     flex-direction: column;
     align-items: flex-end;
@@ -111,6 +117,45 @@
     white-space: nowrap;
   }
   .theme-btn:hover { color: var(--flour); border-color: var(--wood); }
+
+  .header-btns { display: flex; gap: 6px; }
+
+  /* OM-RUTA (M39) */
+  #aboutDlg {
+    width: min(480px, 94vw);
+    max-width: none;
+    margin: auto;
+    background: var(--card);
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 20px;
+    text-align: left;
+    font-family: 'DM Mono', monospace;
+  }
+  #aboutDlg::backdrop { background: rgba(0,0,0,0.75); }
+  #aboutDlg h2 {
+    font-family: 'Playfair Display', serif;
+    font-size: 20px;
+    color: var(--flour);
+    margin-bottom: 10px;
+  }
+  .about-text { font-size: 12px; line-height: 1.6; margin-bottom: 10px; }
+  .about-meta { font-size: 12px; color: var(--muted); margin-bottom: 12px; }
+  .about-row { display: flex; gap: 8px; flex-wrap: wrap; }
+  .about-btn {
+    padding: 10px 14px;
+    border-radius: 8px;
+    border: 1.5px solid var(--border);
+    background: var(--surface);
+    color: var(--flour);
+    font-family: inherit;
+    font-size: 12px;
+    cursor: pointer;
+  }
+  .about-btn.primary { background: var(--ember); border-color: var(--ember); color: #fff; }
+  .about-btn:disabled { opacity: 0.5; cursor: default; }
+  #updMsg { font-size: 12px; line-height: 1.5; min-height: 1.4em; margin: 10px 0; }
 
   /* MAIN */
   main { padding: 12px; max-width: 600px; margin: 0 auto; }
@@ -532,10 +577,13 @@
     <span>Pizzakalkylator optimerad för Ramlösa Tipo 00</span>
   </h1>
   <div class="header-right">
-    <span class="version-badge">v1.1.10</span>
-    <button class="theme-btn" onclick="toggleTheme()" id="theme-btn">
-      ☀️ Ljust
-    </button>
+    <span class="version-badge">v1.1.12</span>
+    <div class="header-btns">
+      <button class="theme-btn" onclick="openAbout()" id="about-btn">ℹ️ Om</button>
+      <button class="theme-btn" onclick="toggleTheme()" id="theme-btn">
+        ☀️ Ljust
+      </button>
+    </div>
   </div>
 </header>
 
@@ -800,20 +848,37 @@
   <div class="modal">
     <h3>Dela appen</h3>
     <p>Skanna för att öppna PizzaR</p>
-    <img src="qr-static.png" id="qr-img" width="220" height="220" style="border-radius:10px; display:block; margin:0 auto;">
+    <img src="qr-static.png" id="qr-img" width="220" height="220" alt="QR-kod till PizzaR" style="border-radius:10px; display:block; margin:0 auto;">
+    <p style="margin:12px 0 0; word-break:break-all;"><a href="https://pelleoxe.github.io/pizzaR/" style="color:var(--ember);">pelleoxe.github.io/pizzaR</a></p>
     <button class="modal-close" onclick="closeQR()">Stäng</button>
   </div>
 </div>
 
+<!-- OM-RUTA (M39) -->
+<dialog id="aboutDlg">
+  <h2>Om PizzaR</h2>
+  <p class="about-text">PizzaR är en pizzakalkylator optimerad för Ramlösa Tipo 00 och Ooni Karu 2. Välj antal bollar, bollstorlek, jästtyp, hydrering och kalljäsningstid, så räknar appen ut mjöl, vatten, salt och jäst och visar hela processen från autolys till bakning. Appen fungerar offline och inget laddas upp.</p>
+  <p class="about-meta">Version <b id="aboutVer"></b> · © <span id="aboutYr"></span> Per Andersson</p>
+  <div class="about-row">
+    <button class="about-btn primary" id="updBtn">Sök uppdatering</button>
+    <button class="about-btn" id="updGo" hidden>Uppdatera nu</button>
+  </div>
+  <p id="updMsg"></p>
+  <button class="about-btn" id="aboutClose">Stäng</button>
+</dialog>
+
 <script>
+const APP_VERSION = "1.1.12";
+
 // ─── THEME ────────────────────────────────────────────
 function toggleTheme() {
   const isLight = document.documentElement.classList.toggle('light');
   document.getElementById('theme-btn').textContent = isLight ? '🌙 Mörkt' : '☀️ Ljust';
-  localStorage.setItem('theme', isLight ? 'light' : 'dark');
+  try { localStorage.setItem('theme', isLight ? 'light' : 'dark'); } catch (e) {}
 }
 function initTheme() {
-  const saved = localStorage.getItem('theme');
+  let saved = null;
+  try { saved = localStorage.getItem('theme'); } catch (e) {}
   if (saved === 'light') {
     document.documentElement.classList.add('light');
     document.getElementById('theme-btn').textContent = '🌙 Mörkt';
@@ -1005,6 +1070,46 @@ document.addEventListener('visibilitychange', async () => {
   }
 });
 
+// ─── OM OCH SÖK UPPDATERING (M39, bygger på M19) ──────
+const gid = id => document.getElementById(id);
+function extractVersion(html){const m=html.match(/const APP_VERSION\s*=\s*"([^"]+)"/);return m?m[1]:null}
+function isNewer(remote,local){
+  const r=remote.split('.').map(Number),l=local.split('.').map(Number);
+  for(let i=0;i<Math.max(r.length,l.length);i++){const a=r[i]||0,b=l[i]||0;if(a>b)return true;if(a<b)return false}
+  return false;
+}
+async function fetchRemote(){
+  try{
+    const res=await fetch(location.href.split('#')[0].split('?')[0]+'?_cb='+Date.now(),{cache:'no-store'});
+    if(!res.ok)return {error:'Servern svarade '+res.status+'.'};
+    const v=extractVersion(await res.text());
+    return v?{version:v}:{error:'Hittade ingen versionsrad i den hämtade filen.'};
+  }catch(e){return {error:'Kunde inte nå adressen.'}}
+}
+async function doUpdate(){
+  try{
+    if('serviceWorker' in navigator){const regs=await navigator.serviceWorker.getRegistrations();await Promise.all(regs.map(r=>r.unregister()))}
+    if('caches' in window){const ks=await caches.keys();await Promise.all(ks.map(k=>caches.delete(k)))}
+  }catch(e){}
+  location.reload();
+}
+function openAbout(){
+  gid('aboutVer').textContent=APP_VERSION;gid('aboutYr').textContent=new Date().getFullYear();
+  gid('updMsg').textContent='';gid('updGo').hidden=true;gid('aboutDlg').showModal();
+}
+gid('aboutClose').onclick=()=>gid('aboutDlg').close();
+gid('updBtn').onclick=async()=>{
+  gid('updGo').hidden=true;
+  if(location.protocol==='file:'){gid('updMsg').textContent='Appen körs som lokal fil, så den kan inte söka uppdatering själv. Öppna den från webbadressen eller hämta den senaste filen manuellt.';return}
+  gid('updBtn').disabled=true;gid('updMsg').textContent='Söker…';
+  const r=await fetchRemote();
+  gid('updBtn').disabled=false;
+  if(r.error){gid('updMsg').textContent='Kunde inte söka uppdatering. '+r.error;return}
+  if(isNewer(r.version,APP_VERSION)){gid('updMsg').textContent='Ny version finns: '+r.version+' (du har '+APP_VERSION+').';gid('updGo').hidden=false}
+  else gid('updMsg').textContent='Du har den senaste versionen ('+APP_VERSION+').';
+};
+gid('updGo').onclick=doUpdate;
+
 // ─── QR ───────────────────────────────────────────────
 function openQR() {
   document.getElementById('qr-modal').classList.add('open');
@@ -1015,6 +1120,7 @@ function closeQR() {
 
 // ─── INIT ─────────────────────────────────────────────
 (function init() {
+  document.querySelector('.version-badge').textContent = 'v' + APP_VERSION;
   initTheme();
   buildBalls();
 
