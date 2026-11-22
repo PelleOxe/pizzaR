@@ -1,0 +1,1041 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>PizzaR</title>
+<meta name="description" content="Pizzakalkylator optimerad för Ramlösa Tipo 00">
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#1A1208">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="PizzaR">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="icon" type="image/png" href="icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+<style>
+  :root {
+    --flour:    #F5F0E8;
+    --char:     #1A1208;
+    --ember:    #E85D04;
+    --ash:      #3D3530;
+    --wood:     #8B6F47;
+    --surface:  #251E18;
+    --card:     #2F2620;
+    --muted:    #A89A90;
+    --success:  #7CB87C;
+    --text:     #F0EAE2;
+    --border:   #4A3E38;
+  }
+
+  :root.light {
+    --flour:    #2A1F18;
+    --char:     #FAF7F2;
+    --ember:    #C44E00;
+    --ash:      #C8B8AD;
+    --wood:     #7A5C3A;
+    --surface:  #F0EAE0;
+    --card:     #FDF9F4;
+    --muted:    #6B5446;
+    --success:  #3A7A3A;
+    --text:     #2A1F18;
+    --border:   #D8CAC0;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--char);
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    font-size: 14px;
+    min-height: 100vh;
+    padding-bottom: 40px;
+  }
+
+  header {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 18px 20px 14px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  header h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--flour);
+    letter-spacing: 0.01em;
+    line-height: 1.1;
+  }
+  header h1 span {
+    display: block;
+    font-size: 11px;
+    font-family: 'DM Mono', monospace;
+    font-weight: 400;
+    color: var(--ember);
+    letter-spacing: 0.04em;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin-top: 3px;
+  }
+  .header-right {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 6px;
+  }
+  .version-badge {
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: 0.08em;
+  }
+  .theme-btn {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 5px 11px;
+    color: var(--muted);
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    transition: all 0.15s;
+    white-space: nowrap;
+  }
+  .theme-btn:hover { color: var(--flour); border-color: var(--wood); }
+
+  /* MAIN */
+  main { padding: 12px; max-width: 600px; margin: 0 auto; }
+
+  /* TWO-COLUMN GRID */
+  .grid-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 10px;
+  }
+  .grid-2 .card { margin-bottom: 0; }
+
+  /* BUTTON ROW */
+  .btn-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-top: 10px;
+  }
+  .btn-row .share-btn { margin-top: 0; }
+
+  /* CARDS */
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px;
+    margin-bottom: 10px;
+  }
+  .card-title {
+    font-size: 11px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--ember);
+    margin-bottom: 10px;
+    font-weight: 500;
+  }
+
+  /* BALLS SELECTOR */
+  .balls-row {
+    display: flex;
+    gap: 7px;
+    flex-wrap: wrap;
+  }
+  .ball-btn {
+    width: 40px; height: 40px;
+    border-radius: 50%;
+    border: 1.5px solid var(--border);
+    background: transparent;
+    color: var(--muted);
+    font-family: 'DM Mono', monospace;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.15s;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .ball-btn:hover { border-color: var(--wood); color: var(--flour); }
+  .ball-btn.active {
+    background: var(--ember);
+    border-color: var(--ember);
+    color: #fff;
+    font-weight: 500;
+  }
+
+  /* SLIDERS */
+  .slider-row {
+    margin-bottom: 12px;
+  }
+  .slider-row:last-child { margin-bottom: 0; }
+  .slider-label {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 7px;
+  }
+  .slider-label span:first-child {
+    font-size: 12px;
+    color: var(--flour);
+  }
+  .slider-label .val {
+    font-size: 15px;
+    font-weight: 500;
+    color: var(--ember);
+    min-width: 54px;
+    text-align: right;
+  }
+  input[type=range] {
+    -webkit-appearance: none;
+    width: 100%;
+    height: 3px;
+    background: var(--border);
+    border-radius: 2px;
+    outline: none;
+    cursor: pointer;
+  }
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 18px; height: 18px;
+    border-radius: 50%;
+    background: var(--ember);
+    border: 2px solid var(--card);
+    box-shadow: 0 0 6px rgba(232,93,4,0.4);
+  }
+  input[type=range]::-webkit-slider-runnable-track {
+    background: linear-gradient(to right, var(--ember) 0%, var(--ember) var(--pct, 0%), var(--border) var(--pct, 0%));
+    height: 3px;
+    border-radius: 2px;
+  }
+
+  /* YEAST TYPE */
+  .yeast-tabs {
+    display: flex;
+    gap: 6px;
+  }
+  .yeast-tab {
+    flex: 1;
+    padding: 9px 6px;
+    border: 1.5px solid var(--border);
+    border-radius: 7px;
+    background: transparent;
+    color: var(--muted);
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    cursor: pointer;
+    text-align: center;
+    transition: all 0.15s;
+    line-height: 1.3;
+  }
+  .yeast-tab:hover { border-color: var(--wood); color: var(--flour); }
+  .yeast-tab.active {
+    border-color: var(--ember);
+    color: var(--flour);
+    background: rgba(232,93,4,0.1);
+  }
+  .yeast-tab .yeast-icon { font-size: 16px; display: block; margin-bottom: 3px; }
+
+  /* FERMENTATION TIME */
+  .time-presets {
+    display: flex; gap: 6px; margin-bottom: 12px;
+  }
+  .time-preset {
+    flex: 1;
+    padding: 8px 4px;
+    border: 1.5px solid var(--border);
+    border-radius: 7px;
+    background: transparent;
+    color: var(--muted);
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    cursor: pointer;
+    text-align: center;
+    transition: all 0.15s;
+  }
+  .time-preset:hover { border-color: var(--wood); color: var(--flour); }
+  .time-preset.active {
+    border-color: var(--ember);
+    color: var(--flour);
+    background: rgba(232,93,4,0.1);
+  }
+  .time-preset .hrs { display: block; font-size: 15px; font-weight: 500; color: var(--ember); }
+
+  /* INGREDIENTS */
+  .ingredient-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+  }
+  .ingredient-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 0;
+    border-bottom: 1px solid rgba(61,53,48,0.5);
+  }
+  .ingredient-row:last-child { border-bottom: none; }
+  .ing-name { color: var(--text); font-size: 13px; }
+  .ing-name small { display: block; font-size: 11px; color: var(--muted); margin-top: 2px; }
+  .ing-amount {
+    font-size: 18px;
+    font-weight: 500;
+    color: var(--flour);
+    text-align: right;
+  }
+  .ing-amount small { display: block; font-size: 11px; color: var(--muted); font-weight: 400; }
+
+  /* AUTOLYS SPLIT */
+  .autolys-note {
+    background: rgba(232,93,4,0.07);
+    border: 1px solid rgba(232,93,4,0.2);
+    border-radius: 8px;
+    padding: 10px 12px;
+    margin-top: 12px;
+    font-size: 11px;
+    color: var(--muted);
+    line-height: 1.6;
+  }
+  .autolys-note strong { color: var(--flour); }
+
+  /* PROCESS STEPS */
+  .step-list { display: flex; flex-direction: column; gap: 0; }
+  .step {
+    display: flex;
+    gap: 10px;
+    padding: 9px 0;
+    border-bottom: 1px solid rgba(61,53,48,0.4);
+    align-items: flex-start;
+  }
+  .step:last-child { border-bottom: none; }
+  .step-num {
+    flex-shrink: 0;
+    width: 24px; height: 24px;
+    border-radius: 50%;
+    border: 1.5px solid var(--border);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 1px;
+  }
+  .step.dag2 .step-num { border-color: var(--ember); color: var(--ember); }
+  .step-content { flex: 1; }
+  .step-title { font-size: 13px; color: var(--flour); margin-bottom: 3px; }
+  .step-desc { font-size: 11px; color: var(--text); opacity: 0.75; line-height: 1.6; }
+  .step-time {
+    font-size: 11px;
+    color: var(--ember);
+    background: rgba(232,93,4,0.1);
+    border-radius: 4px;
+    padding: 1px 7px;
+    margin-left: auto;
+    flex-shrink: 0;
+    align-self: center;
+    white-space: nowrap;
+  }
+
+  /* DAG DIVIDER */
+  .dag-divider {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 4px 0 4px;
+    font-size: 11px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  .dag-divider::before, .dag-divider::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  /* OONI TEMPS */
+  .temp-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+  .temp-item {
+    background: rgba(232,93,4,0.08);
+    border: 1px solid rgba(232,93,4,0.2);
+    border-radius: 8px;
+    padding: 12px;
+    text-align: center;
+  }
+  .temp-value {
+    font-size: 24px;
+    font-weight: 500;
+    color: var(--ember);
+    font-family: 'Playfair Display', serif;
+  }
+  .temp-label {
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 3px;
+    letter-spacing: 0.08em;
+  }
+  .bake-time {
+    margin-top: 10px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 11px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .bake-time span:first-child { font-size: 12px; color: var(--flour); }
+  .bake-time span:last-child { font-size: 13px; color: var(--ember); }
+
+  /* TOTAL DEG */
+  .total-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 14px 16px;
+    background: var(--surface);
+    border: 1px solid rgba(232,93,4,0.3);
+    border-radius: 10px;
+    margin-bottom: 12px;
+  }
+  .total-bar-left { font-size: 11px; color: var(--muted); }
+  .total-bar-left strong { display: block; font-size: 16px; color: var(--flour); margin-top: 2px; }
+  .total-bar-right { text-align: right; font-size: 11px; color: var(--muted); }
+  .total-bar-right strong { display: block; font-size: 16px; color: var(--flour); margin-top: 2px; }
+
+  .wake-switch {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 10px 14px;
+    border: 1.5px solid var(--border);
+    border-radius: 10px;
+    cursor: pointer;
+    color: var(--muted);
+    font-family: 'DM Mono', monospace;
+    transition: all 0.15s;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .wake-switch.on { border-color: var(--ember); background: rgba(232,93,4,0.08); }
+  .wake-text { display: flex; flex-direction: column; gap: 2px; }
+  .wake-title { font-size: 12px; color: var(--flour); }
+  .wake-sub { font-size: 11px; color: var(--muted); }
+  .wake-switch.on .wake-sub { color: var(--ember); }
+  .wake-switch input { position: absolute; opacity: 0; pointer-events: none; }
+  .switch-track {
+    flex-shrink: 0;
+    width: 44px; height: 26px;
+    border-radius: 13px;
+    background: var(--border);
+    position: relative;
+    transition: background 0.2s;
+  }
+  .switch-knob {
+    position: absolute;
+    top: 3px; left: 3px;
+    width: 20px; height: 20px;
+    border-radius: 50%;
+    background: var(--flour);
+    transition: transform 0.2s;
+  }
+  .wake-switch.on .switch-track { background: var(--ember); }
+  .wake-switch.on .switch-knob { transform: translateX(18px); background: #fff; }
+  .share-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+    padding: 13px;
+    background: transparent;
+    border: 1.5px solid var(--border);
+    border-radius: 10px;
+    color: var(--muted);
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.15s;
+    margin-top: 12px;
+  }
+  .share-btn:hover { border-color: var(--wood); color: var(--flour); }
+
+  .modal-overlay {
+    display: none;
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.75);
+    z-index: 100;
+    align-items: center;
+    justify-content: center;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 24px;
+    text-align: center;
+    max-width: 300px;
+    width: 90%;
+  }
+  .modal h3 {
+    font-family: 'Playfair Display', serif;
+    font-size: 18px;
+    color: var(--flour);
+    margin-bottom: 6px;
+  }
+  .modal p { font-size: 11px; color: var(--muted); margin-bottom: 16px; }
+  .modal #qr-canvas { border-radius: 8px; }
+  .modal-close {
+    margin-top: 16px;
+    width: 100%;
+    padding: 10px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--muted);
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    cursor: pointer;
+  }
+
+  /* FOOTER */
+  footer {
+    text-align: center;
+    padding: 20px 16px 0;
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: 0.08em;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>
+    PizzaR
+    <span>Pizzakalkylator optimerad för Ramlösa Tipo 00</span>
+  </h1>
+  <div class="header-right">
+    <span class="version-badge">v1.1.10</span>
+    <button class="theme-btn" onclick="toggleTheme()" id="theme-btn">
+      ☀️ Ljust
+    </button>
+  </div>
+</header>
+
+<main>
+
+  <!-- TOTAL BAR -->
+  <div class="total-bar">
+    <div class="total-bar-left">
+      Total deg
+      <strong id="total-deg">—</strong>
+    </div>
+    <div class="total-bar-right">
+      Per boll
+      <strong id="per-ball">270 g</strong>
+    </div>
+  </div>
+
+  <div class="grid-2">
+  <!-- BOLLAR -->
+  <div class="card">
+    <div class="card-title">Bollar &amp; storlek</div>
+    <div class="balls-row" id="balls-row"></div>
+    <div class="slider-row" style="margin-top: 12px;">
+      <div class="slider-label">
+        <span>Bollstorlek</span>
+        <span class="val" id="weight-val">270 g</span>
+      </div>
+      <input type="range" id="weight-slider" min="220" max="350" value="270" step="10"
+        oninput="onWeight(this)">
+    </div>
+  </div>
+
+  <!-- JÄST -->
+  <div class="card">
+    <div class="card-title">Jästtyp</div>
+    <div class="yeast-tabs" style="flex-direction:column;">
+      <button class="yeast-tab" data-yeast="torr" onclick="setYeast('torr')">
+        <span class="yeast-icon">🧂</span>Torrjäst
+      </button>
+      <button class="yeast-tab active" data-yeast="farsk" onclick="setYeast('farsk')">
+        <span class="yeast-icon">🟡</span>Färsk jäst
+      </button>
+      <button class="yeast-tab" data-yeast="fryst" onclick="setYeast('fryst')">
+        <span class="yeast-icon">❄️</span>Frusen färskjäst
+      </button>
+    </div>
+  </div>
+  </div><!-- /grid-2 -->
+
+  <div class="grid-2">
+  <!-- HYDRERING -->
+  <div class="card">
+    <div class="card-title">Recept</div>
+    <div class="slider-row">
+      <div class="slider-label">
+        <span>Hydrering</span>
+        <span class="val" id="hyd-val">67 %</span>
+      </div>
+      <input type="range" id="hyd-slider" min="60" max="75" value="67" step="0.5"
+        oninput="onHyd(this)">
+    </div>
+    <div class="slider-row">
+      <div class="slider-label">
+        <span>Salt</span>
+        <span class="val" id="salt-val">2.85 %</span>
+      </div>
+      <input type="range" id="salt-slider" min="2" max="3.5" value="2.85" step="0.05"
+        oninput="onSalt(this)">
+    </div>
+  </div>
+
+  <!-- JÄSTID -->
+  <div class="card">
+    <div class="card-title">Kalljäsning</div>
+    <div class="time-presets" id="time-presets" style="flex-wrap:wrap;">
+      <button class="time-preset" data-hrs="18" onclick="setTime(18)">
+        <span class="hrs">18h</span>Express
+      </button>
+      <button class="time-preset active" data-hrs="22" onclick="setTime(22)">
+        <span class="hrs">22h</span>Standard
+      </button>
+      <button class="time-preset" data-hrs="48" onclick="setTime(48)">
+        <span class="hrs">48h</span>Lång
+      </button>
+      <button class="time-preset" data-hrs="72" onclick="setTime(72)">
+        <span class="hrs">72h</span>Extra
+      </button>
+    </div>
+    <div class="slider-row">
+      <div class="slider-label">
+        <span>Timmar i kyl</span>
+        <span class="val" id="time-val">22 h</span>
+      </div>
+      <input type="range" id="time-slider" min="12" max="72" value="22" step="1"
+        oninput="onTime(this)">
+    </div>
+  </div>
+  </div><!-- /grid-2 -->
+
+  <!-- INGREDIENSER -->
+  <div class="card">
+    <div class="card-title">Ingredienser</div>
+    <div class="ingredient-list">
+      <div class="ingredient-row">
+        <div class="ing-name">Ramlösa Tipo 00<small>Mjöl</small></div>
+        <div class="ing-amount"><span id="ing-mjol">—</span><small>gram</small></div>
+      </div>
+      <div class="ingredient-row">
+        <div class="ing-name">Vatten<small>Totalt</small></div>
+        <div class="ing-amount"><span id="ing-vatten">—</span><small>gram</small></div>
+      </div>
+      <div class="ingredient-row">
+        <div class="ing-name">Salt</div>
+        <div class="ing-amount"><span id="ing-salt">—</span><small>gram</small></div>
+      </div>
+      <div class="ingredient-row">
+        <div class="ing-name">Jäst<small id="yeast-type-label">Färsk jäst</small></div>
+        <div class="ing-amount"><span id="ing-jast">—</span><small>gram</small></div>
+      </div>
+    </div>
+
+    <div class="autolys-note" id="autolys-note">
+      <strong>Autolys:</strong> Blanda mjölet med <strong id="autolys-vatten">—</strong> g vatten (allt utom <strong id="autolys-rest">20</strong> g). Vila 30 min.<br>
+      Lös sedan jäst + salt i de resterande <strong id="autolys-rest2">20</strong> g vatten.
+    </div>
+  </div>
+
+  <!-- PROCESS -->
+  <div class="card">
+    <div class="card-title">Process</div>
+    <div class="step-list">
+      <div class="dag-divider">Dag 1</div>
+      <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-content">
+          <div class="step-title">Autolys</div>
+          <div class="step-desc">Blanda mjöl + <span id="proc-autolys-v">—</span> g vatten. Täck skålen.</div>
+        </div>
+        <span class="step-time">30 min</span>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-content">
+          <div class="step-title">Lös jäst &amp; salt</div>
+          <div class="step-desc">I de resterande 20 g vatten, lös <span id="proc-jast">—</span> g jäst + <span id="proc-salt">—</span> g salt.</div>
+        </div>
+        <span class="step-time">5 min</span>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <div class="step-content">
+          <div class="step-title">Knåda</div>
+          <div class="step-desc">4 min låg + 2 min medel. Sikt: 22–24°C i degen.</div>
+        </div>
+        <span class="step-time">6 min</span>
+      </div>
+      <div class="step">
+        <div class="step-num">4</div>
+        <div class="step-content">
+          <div class="step-title">Vila</div>
+          <div class="step-desc">Täck degen.</div>
+        </div>
+        <span class="step-time">15–20 min</span>
+      </div>
+      <div class="step">
+        <div class="step-num">5</div>
+        <div class="step-content">
+          <div class="step-title">Stretch &amp; Fold</div>
+          <div class="step-desc">Dra ut från fyra håll, vik mot mitten. Forma till boll.</div>
+        </div>
+        <span class="step-time">1 min</span>
+      </div>
+      <div class="step">
+        <div class="step-num">6</div>
+        <div class="step-content">
+          <div class="step-title">Bulkjäsning</div>
+          <div class="step-desc">20–22°C. Målet: +40–50% volym (ej dubbel).</div>
+        </div>
+        <span class="step-time">2,5–3 h</span>
+      </div>
+      <div class="step">
+        <div class="step-num">7</div>
+        <div class="step-content">
+          <div class="step-title">Bollning</div>
+          <div class="step-desc"><span id="proc-balls">3</span> × <span id="proc-ball-weight">275</span> g. Mjuka, runda, inte för hårt spända. Lägg i deglåda.</div>
+        </div>
+        <span class="step-time">5 min</span>
+      </div>
+      <div class="step">
+        <div class="step-num">8</div>
+        <div class="step-content">
+          <div class="step-title">Kalljäsning</div>
+          <div class="step-desc">4–5°C. Bollarna jäser klart i kylen.</div>
+        </div>
+        <span class="step-time" id="proc-kall">22 h</span>
+      </div>
+
+      <div class="dag-divider">Dag 2</div>
+
+      <div class="step dag2">
+        <div class="step-num">9</div>
+        <div class="step-content">
+          <div class="step-title">Temperering</div>
+          <div class="step-desc">Ta ut deglådan ur kylen. Bollarna ska vara mjuka, hålla formen, ha lite kupol kvar.</div>
+        </div>
+        <span class="step-time">3 h</span>
+      </div>
+      <div class="step dag2">
+        <div class="step-num">10</div>
+        <div class="step-content">
+          <div class="step-title">Utbakning</div>
+          <div class="step-desc">Mjöla lätt. Tryck ut från mitten. Lämna ca 2 cm kant. Ingen kavel.</div>
+        </div>
+        <span class="step-time">2 min</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- OONI KARU 2 -->
+  <div class="card">
+    <div class="card-title">Ooni Karu 2 — bakning</div>
+    <div class="temp-grid">
+      <div class="temp-item">
+        <div class="temp-value">420–430°</div>
+        <div class="temp-label">Sten</div>
+      </div>
+      <div class="temp-item">
+        <div class="temp-value">450–480°</div>
+        <div class="temp-label">Kupol / luft</div>
+      </div>
+    </div>
+    <div class="bake-time">
+      <span>Baktid</span>
+      <span>60–90 sek · rotera var 15–20 sek</span>
+    </div>
+  </div>
+
+  <div class="btn-row">
+  <!-- DELA APP -->
+  <button class="share-btn" onclick="openQR()">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="3" height="3"/><rect x="18" y="18" width="3" height="3"/><rect x="14" y="18" width="3" height="3" style="display:none"/></svg>
+    Dela app
+  </button>
+
+  <!-- HÅLL VAKEN -->
+  <label class="wake-switch" for="wake-toggle">
+    <span class="wake-text">
+      <span class="wake-title">Håll vaken</span>
+      <span class="wake-sub" id="wake-sub">Av</span>
+    </span>
+    <input type="checkbox" id="wake-toggle" role="switch" onchange="setWake(this.checked)">
+    <span class="switch-track"><span class="switch-knob"></span></span>
+  </label>
+  </div><!-- /btn-row -->
+
+  <footer>© 2026 Per Andersson</footer>
+
+</main>
+
+<!-- QR MODAL -->
+<div class="modal-overlay" id="qr-modal">
+  <div class="modal">
+    <h3>Dela appen</h3>
+    <p>Skanna för att öppna PizzaR</p>
+    <img src="qr-static.png" id="qr-img" width="220" height="220" style="border-radius:10px; display:block; margin:0 auto;">
+    <button class="modal-close" onclick="closeQR()">Stäng</button>
+  </div>
+</div>
+
+<script>
+// ─── THEME ────────────────────────────────────────────
+function toggleTheme() {
+  const isLight = document.documentElement.classList.toggle('light');
+  document.getElementById('theme-btn').textContent = isLight ? '🌙 Mörkt' : '☀️ Ljust';
+  localStorage.setItem('theme', isLight ? 'light' : 'dark');
+}
+function initTheme() {
+  const saved = localStorage.getItem('theme');
+  if (saved === 'light') {
+    document.documentElement.classList.add('light');
+    document.getElementById('theme-btn').textContent = '🌙 Mörkt';
+  }
+}
+
+// ─── STATE ───────────────────────────────────────────
+let state = {
+  balls: 3,
+  yeast: 'farsk',
+  hydration: 67,
+  saltPct: 2.85,
+  coldHours: 22,
+  ballWeight: 270
+};
+
+// Jäst: färsk jäst som % av mjölvikten, varierar med kalljäsningstiden.
+// Dubbelt mot tidigare kurva; 22 h = 0,38 %. Längre tid -> mindre jäst.
+const YEAST_PCT_AT_22H = 0.38;
+const YEAST_BASE = {
+  farsk: 1.0,    // referens
+  torr:  0.33,   // torrjäst ≈ 1/3 av färsk
+  fryst: 1.15    // frusen färskjäst: +15 % för tappad aktivitet
+};
+
+function freshYeastPct(hours) {
+  return YEAST_PCT_AT_22H * Math.pow(0.97, hours - 22);
+}
+
+function calcYeast(flourG, hours, type) {
+  return flourG * (freshYeastPct(hours) / 100) * YEAST_BASE[type];
+}
+
+// ─── CALCULATIONS ─────────────────────────────────────
+function calc() {
+  const { balls, hydration, saltPct, coldHours, yeast } = state;
+  const totalDough = balls * state.ballWeight;
+
+  // Baker's math: mjöl + vatten + salt + jäst = total deg
+  // mjöl = totalDough / (1 + hyd/100 + salt/100 + jäst/mjöl≈liten)
+  // Iterativ approx
+  let flour = totalDough / (1 + hydration / 100 + saltPct / 100);
+  flour = Math.round(flour);
+  const water = Math.round(flour * hydration / 100);
+  const salt  = Math.round(flour * saltPct / 100 * 10) / 10;
+  const jast  = Math.round(calcYeast(flour, coldHours, yeast) * 100) / 100;
+  const autolysWater = water - 20;
+
+  return { flour, water, salt, jast, totalDough: flour + water + salt + jast, autolysWater };
+}
+
+// ─── RENDER ───────────────────────────────────────────
+function render() {
+  const r = calc();
+
+  document.getElementById('total-deg').textContent = Math.round(r.totalDough) + ' g';
+  document.getElementById('per-ball').textContent = state.ballWeight + ' g';
+
+  document.getElementById('ing-mjol').textContent   = r.flour;
+  document.getElementById('ing-vatten').textContent = r.water;
+  document.getElementById('ing-salt').textContent   = r.salt.toFixed(1);
+  document.getElementById('ing-jast').textContent   = r.jast.toFixed(2);
+
+  const yeastLabels = { farsk: 'Färsk jäst', torr: 'Torrjäst', fryst: 'Frusen färskjäst' };
+  document.getElementById('yeast-type-label').textContent = yeastLabels[state.yeast];
+
+  document.getElementById('autolys-vatten').textContent  = r.autolysWater;
+  document.getElementById('autolys-rest').textContent    = 20;
+  document.getElementById('autolys-rest2').textContent   = 20;
+
+  document.getElementById('proc-autolys-v').textContent  = r.autolysWater;
+  document.getElementById('proc-jast').textContent       = r.jast.toFixed(2);
+  document.getElementById('proc-salt').textContent       = r.salt.toFixed(1);
+  document.getElementById('proc-balls').textContent      = state.balls;
+  document.getElementById('proc-ball-weight').textContent = state.ballWeight;
+  document.getElementById('proc-kall').textContent       = state.coldHours + ' h';
+}
+
+// ─── BALLS SELECTOR ───────────────────────────────────
+function buildBalls() {
+  const row = document.getElementById('balls-row');
+  row.innerHTML = '';
+  for (let i = 1; i <= 12; i++) {
+    const b = document.createElement('button');
+    b.className = 'ball-btn' + (i === state.balls ? ' active' : '');
+    b.textContent = i;
+    b.onclick = () => { state.balls = i; buildBalls(); render(); };
+    row.appendChild(b);
+  }
+}
+
+// ─── YEAST ────────────────────────────────────────────
+function setYeast(type) {
+  state.yeast = type;
+  document.querySelectorAll('.yeast-tab').forEach(t =>
+    t.classList.toggle('active', t.dataset.yeast === type));
+  render();
+}
+
+// ─── SLIDERS ─────────────────────────────────────────
+function onWeight(el) {
+  state.ballWeight = parseInt(el.value);
+  document.getElementById('weight-val').textContent = state.ballWeight + ' g';
+  updateSliderTrack(el);
+  render();
+}
+function onHyd(el) {
+  state.hydration = parseFloat(el.value);
+  document.getElementById('hyd-val').textContent = state.hydration.toFixed(1) + ' %';
+  updateSliderTrack(el);
+  render();
+}
+function onSalt(el) {
+  state.saltPct = parseFloat(el.value);
+  document.getElementById('salt-val').textContent = state.saltPct.toFixed(2) + ' %';
+  updateSliderTrack(el);
+  render();
+}
+function onTime(el) {
+  state.coldHours = parseInt(el.value);
+  document.getElementById('time-val').textContent = state.coldHours + ' h';
+  updateSliderTrack(el);
+  syncTimePresets();
+  render();
+}
+function updateSliderTrack(el) {
+  const pct = (el.value - el.min) / (el.max - el.min) * 100;
+  el.style.setProperty('--pct', pct + '%');
+}
+
+// ─── TIME PRESETS ─────────────────────────────────────
+function setTime(hrs) {
+  state.coldHours = hrs;
+  document.getElementById('time-slider').value = hrs;
+  document.getElementById('time-val').textContent = hrs + ' h';
+  updateSliderTrack(document.getElementById('time-slider'));
+  syncTimePresets();
+  render();
+}
+function syncTimePresets() {
+  const presets = [18, 22, 48, 72];
+  document.querySelectorAll('.time-preset').forEach((btn, i) => {
+    btn.classList.toggle('active', presets[i] === state.coldHours);
+  });
+}
+
+// ─── WAKE LOCK ────────────────────────────────────────
+let wakeLock = null;
+let wantWake = false;
+
+function updateWakeUI(text) {
+  const sw = document.querySelector('.wake-switch');
+  sw.classList.toggle('on', wantWake);
+  document.getElementById('wake-toggle').checked = wantWake;
+  document.getElementById('wake-sub').textContent = text || (wantWake ? 'På — skärmen stängs inte av' : 'Av');
+}
+
+async function acquireWake() {
+  try {
+    wakeLock = await navigator.wakeLock.request('screen');
+    wakeLock.addEventListener('release', () => { wakeLock = null; });
+    return true;
+  } catch (e) {
+    return false;
+  }
+}
+
+async function setWake(on) {
+  wantWake = on;
+  if (on) {
+    if (!('wakeLock' in navigator)) {
+      wantWake = false;
+      updateWakeUI('Stöds inte i den här webbläsaren');
+      return;
+    }
+    const ok = await acquireWake();
+    if (!ok) { wantWake = false; updateWakeUI('Kunde inte aktiveras'); return; }
+    updateWakeUI();
+  } else {
+    if (wakeLock) { try { await wakeLock.release(); } catch (e) {} wakeLock = null; }
+    updateWakeUI();
+  }
+}
+
+// iOS släpper låset när appen hamnar i bakgrunden — ta det igen när den kommer tillbaka
+document.addEventListener('visibilitychange', async () => {
+  if (document.visibilityState === 'visible' && wantWake && !wakeLock) {
+    await acquireWake();
+  }
+});
+
+// ─── QR ───────────────────────────────────────────────
+function openQR() {
+  document.getElementById('qr-modal').classList.add('open');
+}
+function closeQR() {
+  document.getElementById('qr-modal').classList.remove('open');
+}
+
+// ─── INIT ─────────────────────────────────────────────
+(function init() {
+  initTheme();
+  buildBalls();
+
+  const hydEl = document.getElementById('hyd-slider');
+  const saltEl = document.getElementById('salt-slider');
+  const timeEl = document.getElementById('time-slider');
+  const weightEl = document.getElementById('weight-slider');
+  updateSliderTrack(hydEl);
+  updateSliderTrack(saltEl);
+  updateSliderTrack(timeEl);
+  updateSliderTrack(weightEl);
+
+  render();
+})();
+</script>
+
+<script>
+// SERVICE WORKER
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js').catch(() => {});
+}
+</script>
+</body>
+</html>
